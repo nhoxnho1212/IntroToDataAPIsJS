@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>fetch csv</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js'></script>
+</head>
+
+<body>
+    <h1>Combined Land-Surface Air and Sea-Surface Water Temperature (°C)</h1>
+    <canvas id='chart' width='900' height='400'></canvas>
+    <script>
+        chartIt();
+
+        async function chartIt() {
+            const data = await GetData();
+            console.log(data);
+            var ctx = document.getElementById('chart').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.xs,
+                    datasets: [
+                        {
+                            label: 'Global Average Temperature (°C)',
+                            data: data.ys.Global,
+                            fill: false,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                            label: 'Northern Average Temperature (°C)',
+                            data: data.ys.North,
+                            fill: false,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Southern Average Temperature (°C)',
+                            data: data.ys.South,
+                            fill: false,
+                            borderColor: 'rgba(255, 206, 86, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                // beginAtZero: true,
+                                callback: function (value, index, values) {
+                                    return value + '°C';
+                                }
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+
+
+        GetData().catch(error => {
+            console.log(error);
+        })
+
+        async function GetData() {
+            // data from https://data.giss.nasa.gov/gistemp/
+            ys = {};
+            xs = [];
+            const response = await fetch('joann.csv');
+            const data = await response.text();
+            const table = data.split('\n').slice(1);
+            let GlobalAvgTemp = [];
+            let NorthAvgTemp = [];
+            let SouthAvgTemp = [];
+            await table.forEach(row => {
+                const columns = row.split(',');
+                const year = columns[0];
+                GlobalAvgTemp.push(parseFloat(columns[1]));
+                NorthAvgTemp.push(parseFloat(columns[2]));
+                SouthAvgTemp.push(parseFloat(columns[3]));
+                xs.push(year);
+
+            });
+            ys.Global = GlobalAvgTemp;
+            ys.North = NorthAvgTemp;
+            ys.South = SouthAvgTemp;
+            return { xs, ys };
+        }
+
+    </script>
+</body>
+
+</html>
