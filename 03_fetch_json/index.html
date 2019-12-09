@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>fetch json</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+    <style>
+        #issmap {
+            width: 400px;
+            height: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Where the ISS ?</h1>
+    <p>
+        latitude: <span id='lat'></span>°<br />
+        longitude: <span id='lon'></span>°
+    </p>
+    <div id='issmap'></div>
+    <script>
+        //making a map and  tiles
+        var issmap = L.map('issmap');
+        const tileURL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+        var tiles = L.tileLayer(tileURL, { attribution });
+        tiles.addTo(issmap);
+
+        //making a marker with a custom  icon
+        var myIcon = L.icon({
+            iconUrl: './iss.png',
+            iconSize: [90, 90],
+            iconAnchor: [20, 40],
+        });
+
+        var marker = L.marker([0, 0], { icon: myIcon }).addTo(issmap);
+
+
+        const api_url = 'https://api.wheretheiss.at/v1/satellites/25544';
+
+        var firstTime = true;
+        async function GetISS() {
+            const response = await fetch(api_url);
+            const data = await response.json();
+            const { latitude, longitude } = data;
+            document.getElementById('lat').textContent = latitude.toFixed(2);
+            document.getElementById('lon').textContent = longitude.toFixed(2);
+            marker.setLatLng([latitude, longitude]);
+            if (firstTime) {
+                issmap.setView([latitude, longitude], 5); 
+                firstTime = false;
+            }
+
+        }
+
+        GetISS().catch(error => {
+            console.log(error);
+        });
+
+        setInterval(GetISS, 1000);
+    </script>
+</body>
+
+</html>
